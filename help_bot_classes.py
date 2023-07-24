@@ -81,7 +81,9 @@ class Record():
     def days_to_birthday(self):
         current_datetime = datetime.now()
         current_year = current_datetime.year
-        birthday = birthday.replace(year = current_year) if birthday.month != 1 else birthday.replace(year = current_year + 1)
+        current_month = current_datetime.month
+        birthday = self.birthday.value.replace(year = current_year)
+        birthday = birthday if birthday > current_datetime else birthday.replace(year = birthday.year + 1)
         return (birthday - current_datetime).days
 
     def __str__(self) -> str:
@@ -103,3 +105,17 @@ class AddressBook(UserDict):
         
     def search_record(self, key):
         return self[key]
+    
+    def iterator(self, n):
+        header = "|{:<30}|{:^12}|{:^18}|{:>40}|".format('Name', 'Birthday', 'Days to birthday', 'Phones') + "\n"
+        result = header
+        count = 0
+        for rec in self.values():
+            result += "|{:<30}|{:^12}|{:^18}|{:>40}|".format(str(rec.name), str(rec.birthday), str(rec.days_to_birthday()), ', '.join(str(p) for p in rec.phones)) + "\n"
+            count += 1
+            if count >= n:
+                yield result
+                count = 0
+                result = header
+        if result:
+            yield result

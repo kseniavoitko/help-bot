@@ -20,10 +20,14 @@ def input_error(func):
         except ValueError:
             if func.__name__ == 'change':
                 return "Contact doesn't exist"
+            else:
+                return 'Wrong parameters'
         except PhoneError:
             return 'Phone must contain 10-12 numbers'
         except BirthdayError:
             return 'Birthday format is dd.mm.yyyy'
+        except:
+            return 'Wrong parameters'
     return inner
 
 
@@ -65,8 +69,17 @@ def phone(args):
     return address_book.search_record(args[0])
 
 
-def show_all(args):
-    return address_book.show_all_records()  
+@input_error
+def show_all(args):   
+    page = 0
+    result = 'No contacts'
+    for rec in address_book.iterator(int(args[0]) if len(args) else 5): 
+        page += 1
+        print(f"page {page}")
+        print(rec)   
+        result = 'END'  
+
+    return result   
 
 
 def no_command(args):
