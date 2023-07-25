@@ -1,5 +1,6 @@
 from collections import UserDict
 from datetime import datetime
+import pickle
 
 class PhoneError(Exception):
     pass
@@ -87,13 +88,17 @@ class Record():
         return (birthday - current_datetime).days
 
     def __str__(self) -> str:
-        return f"{self.name} ({self.birthday}): {', '.join(str(p) for p in self.phones)}"
+        return "|{:<30}|{:^12}|{:^18}|{:>40}|".format(str(self.name), str(self.birthday), str(self.days_to_birthday()), ', '.join(str(p) for p in self.phones))
     
     def __repr__(self) -> str:
         return str(self)
 
 
 class AddressBook(UserDict):
+    def __init__(self, filename: str):
+        UserDict.__init__(self)
+        self.filename = filename
+        
     def add_record(self, record: Record):
         self.data[str(record.name)] = record
         return f"Contact {record} add success"
@@ -103,15 +108,28 @@ class AddressBook(UserDict):
             return "No contacts"
         return "\n".join([str(i) for i in self.values()])
         
-    def search_record(self, key):
+    def search_record_by_name(self, key):
         return self[key]
+    
+    def search_record(self, key):
+        header = "|{:<30}|{:^12}|{:^18}|{:>40}|".format('Name', 'Birthday', 'Days to birthday', 'Phones') + "\n"
+        result = ''
+        for rec in self.values():
+            if key.isdigit():
+                found_phones = [str(p) for p in rec.phones if key in str(p)]
+                if len(found_phones) > 0:
+                    result += str(rec) + "\n"        
+            elif key.lower() in str(rec.name).lower():
+                result += str(rec) + "\n"
+        if result:
+            yield header + result
     
     def iterator(self, n):
         header = "|{:<30}|{:^12}|{:^18}|{:>40}|".format('Name', 'Birthday', 'Days to birthday', 'Phones') + "\n"
         result = header
         count = 0
         for rec in self.values():
-            result += "|{:<30}|{:^12}|{:^18}|{:>40}|".format(str(rec.name), str(rec.birthday), str(rec.days_to_birthday()), ', '.join(str(p) for p in rec.phones)) + "\n"
+            result += str(rec) + "\n"
             count += 1
             if count >= n:
                 yield result
@@ -119,3 +137,11 @@ class AddressBook(UserDict):
                 result = header
         if result:
             yield result
+
+    def save_to_file(self):
+        with open(self.filename, "wb") as file:
+            pickle.dump(self, file)
+
+    def read_from_file(self):
+        with open(self.filename, "rb") as file:
+            self.data = pickle.load(file)

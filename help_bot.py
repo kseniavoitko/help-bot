@@ -1,6 +1,26 @@
 from help_bot_classes import AddressBook, Name, Phone, Record, Birthday, PhoneError, BirthdayError
 
-address_book = AddressBook()
+address_book = AddressBook('address_book.dat')
+try:
+    address_book.read_from_file()
+except:
+    pass
+
+def save_to_file(func):
+    def inner(args):
+        result = func(args)
+        address_book.save_to_file()
+        return result     
+    return inner
+
+
+def read_from_file(func):
+    def inner(args):
+        result = func(args)
+        address_book.read_from_file()
+        return result     
+    return inner
+
 
 def input_error(func):
     def inner(args):
@@ -26,8 +46,8 @@ def input_error(func):
             return 'Phone must contain 10-12 numbers'
         except BirthdayError:
             return 'Birthday format is dd.mm.yyyy'
-        except:
-            return 'Wrong parameters'
+        # except:
+        #     return 'Wrong parameters'
     return inner
 
 
@@ -36,6 +56,7 @@ def hello(args):
 
 
 @input_error
+@save_to_file
 def add(args):   
     name = Name(args[0])
     phone = None
@@ -53,10 +74,11 @@ def add(args):
 
 
 @input_error
+@save_to_file
 def change(args):
     """Get 2 phones to change
     or 1 phone to remove"""
-    record = address_book.search_record(args[0])
+    record = address_book.search_record_by_name(args[0])
     try:
         new_phone = Phone(args[2])
         return record.change_phone(args[1], new_phone)
@@ -65,11 +87,17 @@ def change(args):
 
 
 @input_error
+@read_from_file
 def phone(args):
-    return address_book.search_record(args[0])
+    result = 'No contacts'
+    for rec in address_book.search_record(args[0]):
+        print(rec)
+        result = ''
+    return result 
 
 
 @input_error
+@read_from_file
 def show_all(args):   
     page = 0
     result = 'No contacts'
